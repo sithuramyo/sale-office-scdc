@@ -18,9 +18,9 @@ const buildings: { id: Part; icon: string; name: string; subtitle: string }[] = 
   { id: "site", icon: "site", name: "Site & access", subtitle: "Entrance, yard & circulation" },
 ];
 const details = {
-  overview: { kicker: "PROJECT OVERVIEW", number: "01 — 03", title: "A connected workplace.", copy: "Entrance, sales office, and distribution warehouse follow one shared axis along the length of the site.", tags: ["Sales office", "Warehouse", "Shared site"] },
+  overview: { kicker: "PROJECT OVERVIEW", number: "01 — 03", title: "A connected workplace.", copy: "Enter from the main road, pass the sales office, and follow the loading yard along the warehouse into the depth of the site.", tags: ["Sales office", "Warehouse", "Shared site"] },
   office: { kicker: "SALES OFFICE", number: "01 / 03", title: "Five floors. A mezzanine.", copy: "Ground, mezzanine, and first through fourth floors, with roof access above. Select a level to learn more.", tags: ["Office", "Meeting spaces", "Staff facilities"] },
-  warehouse: { kicker: "SUPPLY CHAIN", number: "02 / 03", title: "Space for distribution.", copy: "A long green warehouse behind the sales office, aligned along the site’s length, with a covered loading edge and side service lane.", tags: ["Storage", "Loading bays", "Covered access"] },
+  warehouse: { kicker: "SUPPLY CHAIN", number: "02 / 03", title: "Space for distribution.", copy: "The green warehouse meets the office’s rear staircase area and extends deep into the site, with a covered loading edge and shared service yard.", tags: ["Storage", "Loading bays", "Covered access"] },
   site: { kicker: "SITE & ACCESS", number: "03 / 03", title: "Arrive. Load. Move.", copy: "Two entrance points, guardhouses, parking, and a shared loading yard connect the office and warehouse.", tags: ["2 entrances", "20 planned car bays", "Loading yard"] },
 };
 const floors = [

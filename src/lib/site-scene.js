@@ -3,13 +3,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildModel, DIMENSIONS, FLOORS, SITE } from './build-model';
 
 const VIEWS = {
-  aerial: { position: [-140, 150, 200], target: [0, 3, SITE.centerZ], title: 'The entire site' },
-  front: { position: [-56, 28, 116], target: [0, 10, 30], title: 'From the street' },
-  loading: { position: [-131, 67, -15], target: [-17, 4, -64], title: 'The loading yard' },
-  top: { position: [0, 430, SITE.centerZ+.01], target: [0, 0, SITE.centerZ], title: 'Site from above' },
-  office: { position: [-56, 41, 98], target: [DIMENSIONS.office.x, 12, DIMENSIONS.office.z], title: 'The sales office' },
-  warehouse: { position: [-109, 98, 78], target: [DIMENSIONS.warehouse.x, 5, DIMENSIONS.warehouse.z], title: 'Storage & distribution' },
-  site: { position: [-58, 47, 112], target: [SITE.entranceX, 2, 48], title: 'Arrival & access' },
+  aerial: { position: [135, 150, 210], target: [0, 3, SITE.centerZ], title: 'The entire site' },
+  front: { position: [DIMENSIONS.office.x+5, 21, 113], target: [DIMENSIONS.office.x, 12, DIMENSIONS.office.z], title: 'From the street' },
+  loading: { position: [-98, 58, -30], target: [-3, 5, DIMENSIONS.warehouse.z], title: 'The loading yard' },
+  top: { position: [0, 390, SITE.centerZ+.01], target: [0, 0, SITE.centerZ], title: 'Site from above' },
+  office: { position: [48, 39, 92], target: [DIMENSIONS.office.x, 12, DIMENSIONS.office.z], title: 'The sales office' },
+  warehouse: { position: [-93, 83, 71], target: [DIMENSIONS.warehouse.x, 5, DIMENSIONS.warehouse.z], title: 'Storage & distribution' },
+  site: { position: [28, 38, 107], target: [SITE.entranceX, 2, 48], title: 'Arrival & access' },
 };
 export function createSiteScene(container, callbacks) {
   const scene=new THREE.Scene();

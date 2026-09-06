@@ -55,7 +55,8 @@ The three images supplied in the chat guide the taupe office, yellow vertical ac
 - Ground-floor extensions and external stairs are simplified and do not reproduce the full architectural plan.
 - Warehouse eaves/ridge heights, roof pitch, corrugations, and loading shutters are estimated.
 - The site boundary is a simplified trapezoid, not an exact cadastral boundary.
-- The revised arrangement follows the requested longitudinal sequence: main entrance, sales office, then warehouse on a shared centreline. The estimated boundary extends to accommodate the original building dimensions, with a side service gate and ten parking bays on each side of the office. The exterior references guide building appearance; their relative placement is superseded by this layout correction.
+- FIX.md and the original exterior references govern the revised spatial relationship. X is site width; the main road is at +Z and both buildings extend lengthwise toward -Z. The warehouse begins beside the office's rear staircase with approximately 2.1 metres between the stair edge and warehouse front-side wall, then continues toward the rear boundary. This replaces the detached, shared-centreline arrangement. Placement is derived from building dimensions and explicit clearances, not a surveyed site plan.
+- The compact main entrance aligns with the office arrival area. A west service gate and driveway connect to the warehouse loading yard; twenty parking bays occupy two banks in the front yard. Boundary trees are sparse to preserve operational space.
 - Parking follows the indicated count, but vehicles, trees, poles, and small site details are illustrative.
 - The compass-like indicator is labeled VIEW because the model has not been georeferenced.
 - No construction, fire-safety, accessibility, or engineering compliance is implied.

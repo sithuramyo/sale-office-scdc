@@ -71,6 +71,10 @@ Edit DIMENSIONS, FLOORS, or the geometry in src/lib/build-model.js.
 
     npm run export:model
 
+Check the longitudinal layout, staircase adjacency, site clearance, and selection geometry:
+
+    npm run check:layout
+
 The website builds its interactive model from this same source at runtime. Regenerating the GLB updates the independent model file.
 
 The office-floor descriptions in SiteExplorer.tsx should be updated if the project plan changes.
@@ -84,6 +88,7 @@ The office comprises ground, mezzanine, first, second, third, and fourth levels,
 ## Validation
 
 - TypeScript type checking
+- Geometry regression checks for the FIX.md layout, exposed stairs, and picking
 - Successful Next.js production build
 - Browser checks at desktop and phone widths
 - Verified building focus, floor highlight, lighting, wireframe, and reference switching
