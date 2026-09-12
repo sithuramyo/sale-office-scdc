@@ -1,2 +1,1 @@
-import SiteExplorer from '@/components/SiteExplorer';
-export default function Home(){return <SiteExplorer/>}
+import DigitalTwin from '@/components/digital-twin/DigitalTwin';export default function Page(){return <DigitalTwin/>}

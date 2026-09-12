@@ -7,20 +7,22 @@
     "build": "next build --webpack",
     "start": "next start --hostname 127.0.0.1 --port 3000",
     "typecheck": "tsc --noEmit",
-    "check:layout": "node scripts/check-layout.mjs",
-    "export:model": "node scripts/export-model.mjs"
+    "inspect:model": "node scripts/inspect-final.mjs",
+    "test:browser": "node scripts/check-v1.cjs"
   },
   "dependencies": {
+    "@types/three": "0.180.0",
     "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "three": "file:vendor/three"
+    "three": "0.180.0"
   },
   "devDependencies": {
-    "typescript": "5.9.3",
     "@types/node": "20.19.43",
     "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.7"
+    "@types/react-dom": "19.2.7",
+    "typescript": "5.9.3"
   },
-  "type": "module"
+  "type": "module",
+  "packageManager": "pnpm@11.19.0"
 }

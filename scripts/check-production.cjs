@@ -1,0 +1,8 @@
+const {chromium}=require('C:/Users/sithuramyo/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');const fs=require('fs'),assert=require('node:assert/strict');
+(async()=>{const browser=await chromium.launch({channel:'chrome',headless:true});const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[],models=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(r.url().includes('.glb'))models.push(r.url());});
+await page.goto('http://127.0.0.1:3002',{waitUntil:'domcontentloaded'});await page.locator('.twin.is-ready').waitFor({timeout:60000});await page.waitForTimeout(1800);
+assert.equal(await page.locator('.dev-trigger').count(),0);assert.equal(await page.evaluate(()=>typeof window.facilityDebug),'undefined');assert.equal(await page.locator('.detail-drawer').count(),0);
+await page.screenshot({path:'work/v1-validation/production-overview.png'});
+await page.getByRole('button',{name:'Explore facility'}).click();await page.locator('[data-entity=office]').click();await page.waitForTimeout(1400);await page.locator('[data-floor="1F"]').click();assert.equal(await page.locator('[data-floor="1F"]').getAttribute('aria-pressed'),'true');assert.equal(await page.getByRole('button',{name:'Cutaway unavailable'}).isDisabled(),true);
+assert.ok(models.length>0&&models.every(u=>u.endsWith('/south-dagon-facility-final.glb')));assert.deepEqual(errors,[]);
+fs.writeFileSync('work/v1-validation/production-results.json',JSON.stringify({result:'PASS',inspector:'ABSENT',debugAPI:'ABSENT',models,errors},null,2));console.log('Production runtime PASS; no developer inspector or debug API.');await browser.close();})().catch(e=>{console.error(e);process.exit(1)});
