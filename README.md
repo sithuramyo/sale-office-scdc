@@ -2,7 +2,7 @@
 
 ## Run
 `pnpm install`, then `pnpm dev` in `D:\Projects\sale-office-scdc`.
-Development: http://127.0.0.1:3000.
+Development: http://localhost:3000.
 Production: `pnpm build`, then `pnpm start`.
 Node.js 20.9+; installed stack: Next.js 16.3.4, React 19.2.8, Three.js 0.180.0, TypeScript 5.9.3.
 This is a fresh frontend. The old runtime viewer, scene generator, object mappings, UI and stylesheet have been replaced. The old GLB remains on disk but has no active runtime reference or fallback. pnpm-lock.yaml is the dependency lockfile.
@@ -41,22 +41,31 @@ All source geometry, hierarchy, matrices, native scale and orientation remain in
 
 The export contains only `source_key`, `source_object`, and `facility_group` extras. Five flat group roots contain the assets. Some gate leaves are in the export Landscape group; the semantic gate registry uses exact source identifiers without reparenting them. Site/road/landscape UI layers are exact source-key lists generated from inspected names. Six office rooftop equipment objects remain in the source Site category; this limitation is preserved and documented.
 
-## Floor Explorer
-**FLOOR ISOLATION BLOCKED BY MODEL METADATA**
+## Phase 14 Floor Explorer
+The hash-bound Phase 13 sidecar is copied byte-for-byte to `public/models/south-dagon-facility-floor-map.json`. The source project and GLB are unchanged.
 
-RF / 4F / 3F / 2F / 1F / GF selection state is implemented. Selecting a label displays its state and the mapping limitation. It does not falsely claim an identified spatial floor or move the camera to an invented elevation. The cutaway action is disabled. Building isolation and Restore Building work without reloading the model.
+| Control | Source | Behavior | Hidden assets |
+|---|---|---|---:|
+| G1 | GF / Ground Level I | Limited Mapping; focus only | 0 |
+| G2 | 218 explicit unresolved ground_2 records | Limited Mapping; bounds-derived camera focus only | 0 |
+| 1F | PARTIAL | Partial Cutaway | 754 |
+| 2F | PARTIAL | Partial Cutaway | 516 |
+| 3F | PARTIAL | Partial Cutaway | 278 |
+| 4F | PARTIAL | Partial Cutaway | 41 |
+| RF | PARTIAL | Roof focus; unresolved stair caps retained | 0 |
 
-The GLB has no floor/level/room metadata or floor hierarchy. Names include two ground-level slabs and four numbered slabs; this is insufficient to assign complete wall, facade, stair, roof and interior membership to the six requested labels. Objects spanning levels must not be split by centroid height.
+G2 receives no fabricated member or hide list. Its camera target is the centre of explicit source-record bounds (Y approximately 4.7 m), not a reassigned floor datum. Ground II remains distinct from 1F. Model datums and architectural uncertainty remain provisional.
 
-For the next approved export or hash-bound sidecar, supply:
-1. `building` (e.g. office), `floor` (GF/1F/2F/3F/4F/RF), and explicit mapping of the two ground levels.
-2. `category`: wall/window/door/slab/stair/roof/facade, retaining `source_object` and stable `source_key`.
-3. Complete, reviewed member source keys per floor.
-4. Explicit handling of multi-floor facade/columns/stairs/shafts and roof equipment.
-5. Reviewed `hideAboveKeys` per floor and native glTF `focusBounds`.
-6. Optional room/area IDs and parentage.
+The sidecar is fetched once per application lifetime. Schema, exact runtime hash/bytes, filename, source count, native Y-up coordinate declaration, bounds, duplicate/missing keys and protected membership are checked before any floor mapping is installed. Invalid sidecars leave normal building navigation available with disabled floor controls. Development logs provide details. A different GLB hash fails model compatibility without fallback.
 
-The manifest's floor contract supports supplied member sets, cached bounds, smooth focus and reversible hiding of approved upper objects. No geometry slicing or speculative floor assignment is used now. Restore clears floor state and isolation and refocuses the building.
+`floor-map.ts` adapts metadata to UI navigation; `ViewerEngine.ts` resolves member and hide keys across facility groups once. Floor transitions touch cached prior/new hide references, not the full registry. Raycasts use cached candidates and reject invisible ancestors. Member highlighting reuses material clones. Office clicks/hover do not override floor exploration; explicit navigation to other buildings still works.
+
+Visibility is original object visibility AND user layer visibility AND floor visibility AND optional building isolation. Entering floor exploration clears building isolation. Restore clears the floor mask/highlight and focuses Office without reloading or enabling disabled layers. Six rooftop equipment assets retain their Site layer ownership.
+
+Validation: `node scripts/check-phase14.cjs`, `node scripts/check-floor-policy.cjs`, existing `check-v1.cjs`, `check-production.cjs`, TypeScript and Next production build. Screenshots/results are in `work/phase14-validation/`. Tests cover all seven controls, exact hide lists, camera targets, global/multi/unresolved preservation, restore/layers, unchanged matrices, one sidecar request, no model reload, responsive interaction and malformed metadata rejection.
+
+Remaining limits: no complete floor isolation, no G2 ownership promotion, no room/device semantics, unresolved architecture remains visible. No V2 systems were added.
+
 
 ## Interaction and presentation
 Only contextual overlays are shown after selection; the model remains full-screen. Initial detail/layer/navigation panels are closed. Hover has one reusable projected tooltip; UI icons have short tooltips. Presets: Overview, Front, Office, Warehouse, Aerial, Gate 1, Gate 2, Parking, Loading Area. Focus is based on inspected bounds.
@@ -64,17 +73,17 @@ Only contextual overlays are shown after selection; the model remains full-scree
 Damping, limited pan, bounded zoom, above-ground camera clamp, fullscreen, reset, day/night environment and responsive bottom sheet are implemented. No fake live status, metrics, devices, backend, auth, database or APIs are added. The status indicates model loading, not facility operational health.
 
 ## Performance
-One-time registries: objects by ID, source, group, building, floor and bounds. No full-model traversal or per-object bounds calculation in the render loop. Raycast candidates are cached and rebuilt on visibility changes; hover is throttled and React updates only when the logical hovered entity changes. Materials are cloned lazily per unique highlighted material, not per mesh. DPR is capped at 1.5. Static 2048 shadow maps refresh on visibility changes. The render loop updates camera/controls and two DOM indicators. Models, controls, GPU resources and pending load requests are disposed on unmount.
+One-time registries: objects by ID, source, group, building, floor and bounds. No full-model traversal or per-object bounds calculation in the render loop. Raycast candidates are cached; hits with invisible ancestors are rejected; hover is throttled and React updates only when the logical hovered entity changes. Materials are cloned lazily per unique highlighted material, not per mesh. DPR is capped at 1.5. Static 2048 shadow maps refresh on visibility changes. The render loop updates camera/controls and two DOM indicators. Models, controls, GPU resources and pending load requests are disposed on unmount.
 
 ## Validation
 Typecheck and production Next.js build passed. There is no lint configuration or lint script in the supplied project.
-Browser checks confirm final model loading, no legacy fallback, all 2,875 world transforms unchanged, entity selection, floor state and safe fallback, reversible isolation/Restore, layers, presets, orbit/zoom, fullscreen, and desktop/tablet/mobile layout.
+Browser checks confirm final model loading, no legacy fallback, all 2,875 world transforms unchanged, entity selection, partial floor cutaways and compatibility rejection, reversible isolation/Restore, layers, presets, orbit/zoom, fullscreen, and desktop/tablet/mobile layout.
 Additional checks cover direct 3D hover/click, tooltip disappearance, and loading failure/retry.
 Evidence: `work/v1-validation/`. Production has no scene-inspector UI; development exposes it for diagnostics only.
 
 ## Remaining limitations
-Floor isolation and semantic interior/room inspection await verified mapping. Auxiliary function, provisional loading/site interpretations, and existing architectural unknowns remain unchanged. Survey north is not established. Performance varies by GPU and browser. No device data or live integration exists in V1.
+Complete floor isolation and semantic room inspection await further verified mapping. Auxiliary function, provisional loading/site interpretations, and existing architectural unknowns remain unchanged. Survey north is not established. Performance varies by GPU and browser. No device data or live integration exists in V1.
 
 Three.js references: [GLTFLoader](https://threejs.org/docs/pages/GLTFLoader.html), [OrbitControls](https://threejs.org/docs/pages/OrbitControls.html).
 
-Final production runtime: PASS at http://127.0.0.1:3002. Development inspector and debug API are absent in production. See work/v1-validation/production-results.json. Use HTTPS for deployed runtime hash validation.
+Final production runtime: PASS at http://localhost:3002. Development inspector and debug API are absent in production. See work/v1-validation/production-results.json. Use HTTPS for deployed runtime hash validation.
