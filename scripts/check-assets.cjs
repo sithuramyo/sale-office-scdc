@@ -1,0 +1,20 @@
+const fs=require('fs'),vm=require('vm'),path=require('path'),ts=require('typescript'),assert=require('node:assert/strict');
+const cache=new Map();
+function load(p){p=path.resolve(p);if(cache.has(p))return cache.get(p);const module={exports:{}};cache.set(p,module.exports);vm.runInNewContext(ts.transpileModule(fs.readFileSync(p,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{exports:module.exports,module,process:{env:{NODE_ENV:'production',NEXT_PUBLIC_SHOW_DEMO_ASSETS:'true'}},require:name=>load(name.startsWith('@/')?'src/'+name.slice(2)+'.ts':path.resolve(path.dirname(p),name+'.ts'))});return module.exports;}
+const {buildAssetRegistry,visibleAssets}=load('src/lib/asset-registry.ts'),{FACILITY_ASSETS,DEMO_ASSETS,DEMO_MODE}=load('src/data/facility-assets.ts');
+assert.equal(FACILITY_ASSETS.length,0);assert.equal(DEMO_MODE,false,'Production rejects even an explicit demo flag');
+const r=buildAssetRegistry(DEMO_ASSETS),before=JSON.stringify(DEMO_ASSETS);
+assert.equal(r.assetById.size,6);assert.equal(r.assetsByStatus.get('unknown').length,6);assert.equal(r.assetsByFloor.get('office/2F').length,1);
+const layers={wifi:true,sensor:true,access:true,cctv:true,network:true,it:true};
+const ids=(buildingId,floorId,demoMode=true,activeLayers=layers)=>Array.from(visibleAssets(r,{buildingId,floorId,demoMode,activeLayers}),a=>a.id).sort();
+assert.equal(ids(null,null).length,6);assert.equal(ids(null,null,false).length,0);assert.equal(ids(null,null,true,{}).length,0);
+assert.deepEqual(ids('office','2F'),['demo-office-2f','demo-office-global','demo-site']);
+assert.deepEqual(ids('office','G1'),['demo-office-g1','demo-office-global','demo-site']);
+assert.deepEqual(ids('office','G2'),['demo-office-g2','demo-office-global','demo-site']);
+assert.deepEqual(ids('warehouse',null),['demo-site','demo-warehouse']);
+assert.equal(ids('office',null).length,5);
+assert.throws(()=>buildAssetRegistry([...DEMO_ASSETS,DEMO_ASSETS[0]]));assert.throws(()=>buildAssetRegistry([{...DEMO_ASSETS[0],position:[NaN,0,0]}]));
+assert.equal(visibleAssets(buildAssetRegistry([{...DEMO_ASSETS[0],enabled:false}]),{activeLayers:layers,buildingId:null,floorId:null,demoMode:true}).length,0);
+r.applyRuntime([{assetId:'demo-office-2f',status:'warning',values:{channel:6}}]);assert.equal(r.assetsByStatus.get('warning').length,1);assert.equal(r.assetsByStatus.get('unknown').length,5);assert.equal(JSON.stringify(DEMO_ASSETS),before);
+r.applyRuntime([]);assert.equal(r.assetsByStatus.get('unknown').length,6);
+console.log('Phase 15 asset registry, context, demo safety and runtime separation PASS');

@@ -4,5 +4,8 @@ await page.goto('http://localhost:3002',{waitUntil:'domcontentloaded'});await pa
 assert.equal(await page.locator('.dev-trigger').count(),0);assert.equal(await page.evaluate(()=>typeof window.facilityDebug),'undefined');assert.equal(await page.locator('.detail-drawer').count(),0);
 await page.screenshot({path:'work/v1-validation/production-overview.png'});
 await page.getByRole('button',{name:'Explore facility'}).click();await page.locator('[data-entity=office]').click();await page.waitForTimeout(1400);await page.locator('[data-floor="1F"]').click();assert.equal(await page.locator('[data-floor="1F"]').getAttribute('aria-pressed'),'true');assert.match(await page.locator('.floor-context').innerText(),/Partial Cutaway/);
+await page.getByRole('button',{name:'Layers',exact:true}).click();
+for(const layer of ['cctv','wifi','network','access','fire','sensor','iot','meeting','it'])await page.locator('[data-layer='+layer+']').check();
+assert.equal(await page.locator('.asset-marker').count(),0);assert.equal(await page.locator('.demo-banner').count(),0);assert.equal(await page.locator('.asset-detail').count(),0);assert.equal(await page.locator('.layers-panel').innerText().then(t=>t.includes('demo')),false);
 assert.ok(models.length>0&&models.every(u=>u.endsWith('/south-dagon-facility-final.glb')));assert.deepEqual(errors,[]);
 fs.writeFileSync('work/v1-validation/production-results.json',JSON.stringify({result:'PASS',inspector:'ABSENT',debugAPI:'ABSENT',models,errors},null,2));console.log('Production runtime PASS; no developer inspector or debug API.');await browser.close();})().catch(e=>{console.error(e);process.exit(1)});

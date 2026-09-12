@@ -17,7 +17,7 @@ All source geometry, hierarchy, matrices, native scale and orientation remain in
 ## Fresh implementation
 - `src/components/digital-twin/DigitalTwin.tsx`: contextual React shell, loading/retry, floor selector, drawers, layers, camera controls.
 - `ViewerEngine.ts`: model loading/hash validation, one-time registries, cached bounds, raycast selection, camera interpolation, reversible visibility and material highlighting, day/night lighting, resource disposal.
-- `FacilityHotspots.tsx`: data-driven future spatial markers; V1 data is empty.
+- `FacilityAssets.tsx`: shared spatial markers, tooltip and detail; production asset inventory is empty.
 - `src/state/facility-store.ts`: centralized viewer modes, entity/floor selection, layers, camera preset, drawer and lighting state.
 - `src/types/facility.ts`: Facility → Building → Floor → Room/Area → Device contracts.
 - `src/config/facility.ts`: four built-environment layers, empty future system layers, final model URL.
@@ -87,3 +87,6 @@ Complete floor isolation and semantic room inspection await further verified map
 Three.js references: [GLTFLoader](https://threejs.org/docs/pages/GLTFLoader.html), [OrbitControls](https://threejs.org/docs/pages/OrbitControls.html).
 
 Final production runtime: PASS at http://localhost:3002. Development inspector and debug API are absent in production. See work/v1-validation/production-results.json. Use HTTPS for deployed runtime hash validation.
+
+## Connected Facility foundation (Phase 15)
+See [Phase 15 implementation and validation](docs/phase15-connected-facility.md). Add approved asset data in src/data/facility-assets.ts; native glTF Y-up metres. Production has no invented device locations or telemetry. Development demos require NEXT_PUBLIC_SHOW_DEMO_ASSETS=true and are blocked in production.
