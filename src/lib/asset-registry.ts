@@ -5,7 +5,7 @@ export function buildAssetRegistry(items:readonly Asset[],runtime:readonly Facil
  const assetById=new Map<string,Asset>(),assetsByType=new Map<string,Asset[]>(),assetsByBuilding=new Map<string,Asset[]>(),assetsByFloor=new Map<string,Asset[]>(),assetsByStatus=new Map<AssetStatus,Asset[]>(),assetsByLayer=new Map<string,Asset[]>(),runtimeById=new Map<string,FacilityAssetRuntimeState>();
  const add=(map:Map<string,Asset[]>,key:string,a:Asset)=>{const list=map.get(key)||[];list.push(a);map.set(key,list)};
  for(const a of items){
- if(!a.id||assetById.has(a.id)||!ASSET_TYPES[a.type]||a.position.length!==3||!a.position.every(Number.isFinite)||a.floorId&&!a.buildingId)throw Error('Invalid or duplicate spatial asset: '+a.id);
+ if(!a.id||assetById.has(a.id)||!ASSET_TYPES[a.type]||(a.position!==null&&(a.position.length!==3||!a.position.every(Number.isFinite)))||a.floorId&&!a.buildingId)throw Error('Invalid or duplicate spatial asset: '+a.id);
  assetById.set(a.id,a);add(assetsByType,a.type,a);add(assetsByBuilding,a.buildingId||'site',a);if(a.floorId)add(assetsByFloor,(a.buildingId||'')+'/'+a.floorId,a);add(assetsByLayer,ASSET_TYPES[a.type].layer,a);
  }
  const applyRuntime=(states:readonly FacilityAssetRuntimeState[])=>{
@@ -18,6 +18,8 @@ export function buildAssetRegistry(items:readonly Asset[],runtime:readonly Facil
 }
 export type AssetRegistry=ReturnType<typeof buildAssetRegistry>;
 export function assetVisible(a:Asset,c:AssetContext){
+ if(a.evidence&&c.floorId&&(a.buildingId!==c.buildingId||a.floorId!==c.floorId))return false;
+ if(a.evidence&&c.buildingId&&!c.floorId&&a.buildingId!==c.buildingId&&a.buildingId!=='site')return false;
  return a.enabled!==false&&!!c.activeLayers[ASSET_TYPES[a.type].layer]&&(!a.demo||c.demoMode)&&(!c.buildingId||!a.buildingId||a.buildingId===c.buildingId)&&(!c.floorId||!a.floorId||a.buildingId!==c.buildingId||a.floorId===c.floorId);
 }
 export function visibleAssets(r:AssetRegistry,c:AssetContext){

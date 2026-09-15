@@ -1,6 +1,17 @@
 import type {FacilityAssetDefinition,FacilityAssetRuntimeState} from '@/types/facility-assets';
-// Approved inventory only. No installed-device coordinates have been supplied.
-export const FACILITY_ASSETS:readonly FacilityAssetDefinition[]=[];
+import raw from './design-assets.json';
+import type {DesignAsset} from '@/types/design-asset';
+const types={CCTV:'cctv',WIFI_AP:'wifi_ap',DATA_POINT:'data_point',NETWORK_RACK:'network_rack'} as const;
+const buildings:Record<string,string>={OFFICE:'office',WAREHOUSE:'warehouse',GATE_1:'gate1',GATE_2:'gate2',SITE:'site'};
+// Canonical policy is checked here as well as during generation. No XY/footprint fallback.
+export const FACILITY_ASSETS:readonly FacilityAssetDefinition[]=(raw.assets as unknown as DesignAsset[]).map(a=>{
+ const p=a.visualPosition;
+ const eligible=a.displayPolicy.review3dEligible&&p!==null&&[p.x,p.y,p.z].every(v=>typeof v==='number'&&Number.isFinite(v));
+ const buildingId=buildings[a.building];
+ return {id:a.id,type:types[a.assetType],label:a.displayName,facilityId:'south-dagon',buildingId,
+ floorId:a.floor,roomId:a.roomId??undefined,parentId:a.roomId||`${buildingId}/${a.floor}`,
+ position:eligible?[p!.x,p!.y as number,p!.z]:null,evidence:a};
+});
 export const FACILITY_RUNTIME:readonly FacilityAssetRuntimeState[]=[];
 // Synthetic navigation test points, never installed-device locations.
 export const DEMO_ASSETS:readonly FacilityAssetDefinition[]=[

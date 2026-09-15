@@ -6,6 +6,7 @@ import {MODEL_URL} from '@/config/facility';
 import type {Manifest,ViewerState,SpatialEntity} from '@/types/facility';
 type Asset={id:string;object:T.Object3D;meshes:T.Mesh[];box:T.Box3;source:string;group:string;layer:string;originalVisible:boolean};
 import {composedVisibility} from './visibility';
+import {PRESENTATION_ONLY_OCCLUDERS} from './presentation-visibility';
 
 type Hooks={progress:(n:number)=>void;ready:()=>void;error:(message?:string)=>void;hover:(id:string|null)=>void;select:(id:string)=>void};
 export class ViewerEngine{
@@ -41,6 +42,7 @@ export class ViewerEngine{
  this.manifest.entities.forEach(e=>{if(!e.sourceKeys.length)return;this.entities.set(e.id,e);const assets=e.sourceKeys.map(k=>this.objectById.get(k)).filter((a):a is Asset=>!!a);const bounds=new T.Box3();const meshes=assets.flatMap(a=>a.meshes);assets.forEach(a=>bounds.union(a.box));meshes.forEach(m=>this.entityByMesh.set(m.uuid,e.id));this.entityMeshes.set(e.id,meshes);this.entityBounds.set(e.id,bounds);if(e.type==='building')this.objectsByBuilding.set(e.id,assets);this.overview.union(bounds);});
  const metadata=await floorData;if(this.disposed)return;
  try{if(metadata.error)throw metadata.error;if(this.duplicateKeys.length)throw Error('Duplicate GLB source keys: '+this.duplicateKeys.join(','));
+ for(const rule of PRESENTATION_ONLY_OCCLUDERS){const a=this.objectById.get(rule.key);if(!a||a.source!==rule.source||a.group!=='02_OFFICE')throw Error('Presentation occluder mismatch '+rule.key);}
  for(const f of validateFloorMap(metadata.value,{sha256:hash,bytes:data.byteLength,meshNodes:this.manifest.meshNodes},new Set(this.objectById.keys()))){
  this.floors.set(f.id,f);const members=f.memberKeys.map(k=>this.objectById.get(k)!);this.resolvedFloorMembers.set(f.id,members);this.objectsByFloor.set(f.id,members);this.resolvedFloorHideAbove.set(f.id,f.hideAboveKeys.map(k=>this.objectById.get(k)!));
  }}catch(e){this.floorError='Floor mapping incompatible';if(process.env.NODE_ENV==='development')console.error(e);}
@@ -51,14 +53,23 @@ export class ViewerEngine{
  const fullUpdate=!previous||state.activeLayers!==previous.activeLayers||state.isolated!==previous.isolated||(state.isolated&&state.selectedEntity!==previous.selectedEntity);
  const floorChanged=state.selectedFloor!==previous?.selectedFloor;
  if(fullUpdate||floorChanged){
- const nextHidden=new Set(this.resolvedFloorHideAbove.get(state.selectedFloor||'')||[]);
- const changed=fullUpdate?this.objectById.values():new Set([...this.floorHidden,...nextHidden]);
+ const floorId=state.selectedEntity==='office'?state.selectedFloor:null;
+ const nextHidden=new Set(this.resolvedFloorHideAbove.get(floorId||'')||[]);
+ if(!this.floorError)for(const rule of PRESENTATION_ONLY_OCCLUDERS)if(rule.floors.some(f=>f===floorId))nextHidden.add(this.objectById.get(rule.key)!);
+ // Recompose every object from its load-time baseline on cutaway/layer/isolation transitions.
+ const changed=this.objectById.values();
  this.floorHidden=nextHidden;const isolated=state.isolated?new Set(this.entities.get(state.selectedEntity||'')?.sourceKeys||[]):null;
  for(const a of changed)a.object.visible=composedVisibility(a.originalVisible,state.activeLayers[a.layer]!==false,!nextHidden.has(a),!isolated||isolated.has(a.id));
  this.renderer.shadowMap.needsUpdate=true;this.clearHover();
  }
  if(state.selectedEntity!==previous?.selectedEntity || floorChanged){if(state.selectedFloor){const f=this.floors.get(state.selectedFloor);if(f)this.focusBox(new T.Box3(new T.Vector3(...f.focusBounds.min),new T.Vector3(...f.focusBounds.max)),new T.Vector3(.3,1,-.3),f.focusTarget?new T.Vector3(...f.focusTarget):undefined);}else this.focus(state.selectedEntity||'overview');this.highlight();}
  if(state.dayNightMode!==previous?.dayNightMode){const night=state.dayNightMode==='night';this.scene.background=new T.Color(night?'#101a2b':'#bacbd4');this.scene.fog=new T.Fog(night?'#101a2b':'#bacbd4',650,2200);this.hemi.intensity=night?.55:1.8;this.sun.intensity=night?.7:2.6;this.sun.color.set(night?'#8bbaff':'#fff7ed');this.renderer.toneMappingExposure=night?.85:1.05;}
+ }
+ focusPosition(position:[number,number,number]){
+ // Camera navigation only. Never translate a marker or the architectural root.
+ const target=new T.Vector3(...position),direction=this.camera.position.clone().sub(this.controls.target).normalize();
+ const to=target.clone().add(direction.multiplyScalar(22));
+ if(this.reduce){this.camera.position.copy(to);this.controls.target.copy(target);}else this.tween={start:performance.now(),from:this.camera.position.clone(),to,fromTarget:this.controls.target.clone(),target};
  }
  focus(id:string){if(!this.root)return;if(id==='front'){const box=this.entityBounds.get('office');if(box)this.focusBox(box,new T.Vector3(1,.18,-1));}else if(id==='aerial')this.focusBox(this.overview,new T.Vector3(.35,1,-.4));else this.focusBox(this.entityBounds.get(id)||this.overview,new T.Vector3(1,.7,-1));}
  private focusBox(box:T.Box3,direction:T.Vector3,focusTarget?:T.Vector3){const target=focusTarget||box.getCenter(new T.Vector3()),size=box.getSize(new T.Vector3());const distance=Math.max(10,size.length()/(2*Math.tan(T.MathUtils.degToRad(this.camera.fov/2)))*.95/Math.min(1,this.camera.aspect));const to=target.clone().add(direction.normalize().multiplyScalar(Math.min(430,distance)));
@@ -80,7 +91,7 @@ export class ViewerEngine{
  this.renderer.render(this.scene,this.camera);};
  project(position:[number,number,number]){const p=new T.Vector3(...position).project(this.camera);return {x:(p.x*.5+.5)*this.host.clientWidth,y:(-p.y*.5+.5)*this.host.clientHeight,visible:p.z>=-1&&p.z<=1&&Math.abs(p.x)<=1&&Math.abs(p.y)<=1};}
  inspect(){return [...this.objectById.values()].map(a=>({id:a.id,name:a.object.name,type:a.object.type,parent:a.object.parent?.name,children:a.object.children.length,source_object:a.source,facility_group:a.group,worldPosition:a.object.getWorldPosition(new T.Vector3()).toArray(),bounds:{min:a.box.min.toArray(),max:a.box.max.toArray()},matrix:a.object.matrixWorld.toArray(),visible:a.object.visible,originalVisible:a.originalVisible,layer:a.layer}));}
- floorInfo(){return {error:this.floorError,floors:[...this.floors.values()],hidden:[...this.floorHidden].map(a=>a.id)};}
+ floorInfo(){return {error:this.floorError,floors:[...this.floors.values()],hidden:[...this.floorHidden].map(a=>a.id),presentationOnly:PRESENTATION_ONLY_OCCLUDERS.filter(r=>!this.floorError&&r.floors.some(f=>f===this.state?.selectedFloor)),clipping:false};}
  private disposeRoot(root:T.Object3D){const geometries=new Set<T.BufferGeometry>(),materials=new Set<T.Material>();root.traverse(o=>{if(o instanceof T.Mesh){geometries.add(o.geometry);(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>materials.add(m));}});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}
  dispose(){this.disposed=true;this.abort.abort();this.renderer.setAnimationLoop(null);this.resize.disconnect();this.controls.dispose();this.highlighted.forEach(m=>m.material=this.originals.get(m)!);this.highlightCopies.forEach(m=>m.dispose());if(this.root)this.disposeRoot(this.root);this.renderer.dispose();this.renderer.domElement.remove();}
 }

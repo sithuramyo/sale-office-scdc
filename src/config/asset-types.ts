@@ -1,5 +1,6 @@
 import type {FacilityAssetType} from '@/types/facility-assets';
 export const ASSET_TYPES:Record<FacilityAssetType,{label:string;layer:string;icon:string}>={
+ data_point:{label:'Data point',layer:'data',icon:'network'},network_rack:{label:'Network rack',layer:'racks',icon:'network'},
  cctv:{label:'Camera',layer:'cctv',icon:'camera'},wifi_ap:{label:'Wi-Fi AP',layer:'wifi',icon:'wifi'},
  network:{label:'Network',layer:'network',icon:'network'},access_control:{label:'Access Control',layer:'access',icon:'lock'},
  fire_sensor:{label:'Fire Sensor',layer:'fire',icon:'fire'},sensor:{label:'Sensor',layer:'sensor',icon:'sensor'},

@@ -20,7 +20,7 @@ export function validateFloorMap(raw:unknown,model:{sha256:string;bytes:number;m
  for(const [key,obj] of Object.entries(m.objects)){check(key===obj.source_key&&keys.has(key),'object key mismatch '+key);bounds(obj.bounds);}
  keyList(m.unresolved.map(o=>o.source_key));
  const protectedKeys=new Set([...office.globalKeys,...office.multiFloorKeys,...m.unresolved.map(o=>o.source_key),...Object.entries(m.objects).filter(([,o])=>o.membershipType!=='SINGLE_FLOOR').map(([k])=>k)]);
- const order=['GF','1F','2F','3F','4F','RF'];
+ const order=['GF','G2','1F','2F','3F','4F','RF'];
  const result=order.map((id,index)=>{
   const f=office.floors[id];check(f&&['PARTIAL','BLOCKED','READY_FOR_ISOLATION'].includes(f.status),'missing/invalid floor '+id);
   bounds(f.focusBounds);if(f.focusTarget)check(vector(f.focusTarget)&&f.focusTarget.every((v,i)=>v>=f.focusBounds.min[i]&&v<=f.focusBounds.max[i]),'invalid focus target');
@@ -28,14 +28,7 @@ export function validateFloorMap(raw:unknown,model:{sha256:string;bytes:number;m
   for(const k of f.memberKeys)check(m.objects[k]?.membershipType==='SINGLE_FLOOR'&&m.objects[k].floors.includes(id),'membership conflict '+k);
   const lower=new Set(order.slice(0,index+1).flatMap(l=>office.floors[l]?.memberKeys||[]));
   for(const k of f.hideAboveKeys)check(!protectedKeys.has(k)&&!lower.has(k)&&m.objects[k]?.membershipType==='SINGLE_FLOOR','unsafe hide key '+k);
-  return {...f,id:id==='GF'?'G1':id,label:id==='GF'?'Ground Level I':f.label,limited:id==='GF'||f.status==='BLOCKED',hideAboveKeys:id==='GF'||f.status==='BLOCKED'?[]:f.hideAboveKeys};
+  return {...f,id:id==='GF'?'G1':id,label:id==='GF'?'Ground Level I':f.label,limited:f.status==='BLOCKED',hideAboveKeys:f.status==='BLOCKED'?[]:f.hideAboveKeys};
  });
- // Navigation bounds only: unresolved Ground II records are not promoted to floor membership.
- const g2=m.unresolved.filter(o=>o.sourceLevels?.length===1&&o.sourceLevels[0]==='ground_2').map(o=>m.objects[o.source_key]);
- check(g2.length&&g2.every(o=>o?.membershipType==='UNRESOLVED'),'Ground II focus evidence absent');
- const b:Bounds={min:[Infinity,Infinity,Infinity],max:[-Infinity,-Infinity,-Infinity]};
- for(const o of g2)for(let i=0;i<3;i++){b.min[i]=Math.min(b.min[i],o.bounds.min[i]);b.max[i]=Math.max(b.max[i],o.bounds.max[i]);}
- bounds(b);
- result.splice(1,0,{id:'G2',label:'Ground Level II',status:'BLOCKED',limited:true,memberKeys:[],hideAboveKeys:[],focusBounds:b,focusTarget:b.min.map((n,i)=>(n+b.max[i])/2) as Vec3});
  return result;
 }
